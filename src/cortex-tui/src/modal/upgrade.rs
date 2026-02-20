@@ -479,7 +479,7 @@ impl UpgradeModal {
         let max_len = (chunks[2].width as usize).saturating_sub(4);
         let error_display = if error.len() > max_len {
             let trunc = max_len.saturating_sub(3);
-            format!("{}...", &error[..trunc])
+            format!("{}...", &error[..error.floor_char_boundary(trunc)])
         } else {
             error.to_string()
         };

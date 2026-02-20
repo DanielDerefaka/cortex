@@ -15,8 +15,7 @@ use crate::widgets::{HintContext, KeyHints, StatusIndicator};
 
 use super::layout::LayoutManager;
 use super::rendering::{
-    generate_message_lines, generate_welcome_lines,
-    render_scroll_to_bottom_hint, render_scrollbar,
+    generate_message_lines, generate_welcome_lines, render_scroll_to_bottom_hint, render_scrollbar,
 };
 
 // Re-export for convenience

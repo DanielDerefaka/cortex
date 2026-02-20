@@ -65,8 +65,8 @@ mod tests {
     use async_trait::async_trait;
     use tokio::sync::mpsc;
 
-    use super::*;
     use super::super::AgentEvent;
+    use super::*;
 
     /// No-op delegate that does nothing.
     pub struct NoOpDelegate;

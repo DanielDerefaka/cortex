@@ -8,5 +8,4 @@ impl CommandExecutor {
         // Always open the interactive MCP panel - all management is centralized there
         CommandResult::OpenModal(ModalType::McpManager)
     }
-
 }

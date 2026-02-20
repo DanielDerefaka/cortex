@@ -511,5 +511,4 @@ impl EventLoop {
 
         self.running_tool_tasks.insert(tool_call_id, task);
     }
-
 }

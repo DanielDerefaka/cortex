@@ -224,7 +224,7 @@ impl LoginModal {
         let url_max = (chunks[2].width as usize).saturating_sub(2);
         let url_display = if self.verification_url.len() > url_max {
             let trunc_len = (chunks[2].width as usize).saturating_sub(5);
-            format!("{}...", &self.verification_url[..trunc_len])
+            format!("{}...", &self.verification_url[..self.verification_url.floor_char_boundary(trunc_len)])
         } else {
             self.verification_url.clone()
         };
@@ -327,7 +327,7 @@ impl LoginModal {
         let err_max = (chunks[4].width as usize).saturating_sub(4);
         let error_display = if error.len() > err_max {
             let trunc = (chunks[4].width as usize).saturating_sub(7);
-            format!("{}...", &error[..trunc])
+            format!("{}...", &error[..error.floor_char_boundary(trunc)])
         } else {
             error.to_string()
         };

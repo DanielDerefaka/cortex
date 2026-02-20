@@ -35,5 +35,4 @@ impl LayoutManager {
     pub fn gap(&mut self, lines: u16) {
         self.next_y = (self.next_y + lines).min(self.max_y);
     }
-
 }

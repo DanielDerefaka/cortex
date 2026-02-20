@@ -382,7 +382,6 @@ fn is_word_break(grapheme: &str) -> bool {
     false
 }
 
-
 /// Iterator that yields wrapped lines.
 pub struct WrapIterator<'a> {
     remaining: &'a str,
