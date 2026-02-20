@@ -35,16 +35,4 @@ impl LayoutManager {
     pub fn gap(&mut self, lines: u16) {
         self.next_y = (self.next_y + lines).min(self.max_y);
     }
-
-    /// Returns remaining height from current position.
-    pub fn remaining_height(&self) -> u16 {
-        self.max_y.saturating_sub(self.next_y)
-    }
-
-    /// Allocates remaining space minus reserved bottom space.
-    #[allow(dead_code)]
-    pub fn allocate_remaining(&mut self, reserve_bottom: u16) -> Rect {
-        let available = self.remaining_height().saturating_sub(reserve_bottom);
-        self.allocate(available)
-    }
 }

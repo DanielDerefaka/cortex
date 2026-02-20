@@ -369,7 +369,9 @@ impl<'a> InteractiveWidget<'a> {
             let remaining = (area.x + area.width).saturating_sub(desc_x);
             if remaining > 10 {
                 let desc_text = if desc.len() > remaining as usize {
-                    format!("({}...)", &desc[..remaining as usize - 5])
+                    let max_desc = (remaining as usize).saturating_sub(5);
+                    let truncated = &desc[..desc.floor_char_boundary(max_desc)];
+                    format!("({}...)", truncated)
                 } else {
                     format!("({})", desc)
                 };
@@ -487,10 +489,17 @@ impl<'a> InteractiveWidget<'a> {
         let value_x = x + label.len() as u16 + 1;
         let remaining_width = area.width.saturating_sub(value_x - area.x + 1);
 
+        if remaining_width < 4 {
+            return;
+        }
+
         if field.value.is_empty() && !is_focused {
             // Show placeholder
-            let placeholder = if field.placeholder.len() > remaining_width as usize {
-                format!("{}...", &field.placeholder[..remaining_width as usize - 3])
+            let max_ph = remaining_width as usize;
+            let placeholder = if field.placeholder.len() > max_ph {
+                let trunc = max_ph.saturating_sub(3);
+                let end = field.placeholder.floor_char_boundary(trunc);
+                format!("{}...", &field.placeholder[..end])
             } else {
                 field.placeholder.clone()
             };
@@ -502,11 +511,12 @@ impl<'a> InteractiveWidget<'a> {
             );
         } else {
             // Show value with cursor if focused
-            let display_value = if field.value.len() > remaining_width as usize - 1 {
-                format!(
-                    "...{}",
-                    &field.value[field.value.len() - (remaining_width as usize - 4)..]
-                )
+            let max_val = remaining_width as usize;
+            let display_value = if field.value.len() > max_val.saturating_sub(1) {
+                let tail_len = max_val.saturating_sub(4);
+                let start = field.value.len().saturating_sub(tail_len);
+                let start = field.value.ceil_char_boundary(start);
+                format!("...{}", &field.value[start..])
             } else {
                 field.value.clone()
             };

@@ -391,65 +391,6 @@ impl EventLoop {
         }
     }
 
-    /// Save provider API key to config
-    pub(super) fn _save_provider_api_key(
-        &self,
-        provider: &str,
-        api_key: &str,
-    ) -> anyhow::Result<()> {
-        use crate::providers::config::CortexConfig;
-        use crate::providers::models::get_models_for_provider;
-
-        // Load existing config or create new
-        let mut config = CortexConfig::load().unwrap_or_default();
-
-        // Check if we should set this as default BEFORE modifying providers
-        // (to avoid borrow conflict)
-        let should_set_default = {
-            let has_configured = config.providers.values().any(|p| p.api_key.is_some());
-            !has_configured || config.default_provider == "cortex"
-        };
-
-        // Get default model for this provider (before mutable borrow)
-        let default_model = if should_set_default {
-            let models = get_models_for_provider(provider);
-            models.first().map(|m| m.id.clone())
-        } else {
-            None
-        };
-
-        // Now update the provider config
-        let provider_config = config.providers.entry(provider.to_string()).or_default();
-        provider_config.api_key = Some(api_key.to_string());
-        provider_config.enabled = true;
-
-        // Set this provider as default if needed
-        if should_set_default {
-            config.default_provider = provider.to_string();
-            if let Some(model_id) = default_model {
-                config.default_model = model_id.clone();
-                provider_config.default_model = Some(model_id);
-            }
-        }
-
-        // Save config
-        config.save()?;
-
-        // Also set environment variable for current session
-        let env_var = crate::providers::config::PROVIDERS
-            .iter()
-            .find(|p| p.id == provider)
-            .map(|p| p.env_var)
-            .unwrap_or("API_KEY");
-
-        // SAFETY: We're setting our own env var, not modifying another thread's state
-        unsafe {
-            std::env::set_var(env_var, api_key);
-        }
-
-        Ok(())
-    }
-
     /// Save MCP server to storage
     pub(super) fn save_mcp_server(
         &self,
@@ -457,13 +398,6 @@ impl EventLoop {
     ) -> anyhow::Result<()> {
         let storage = crate::mcp_storage::McpStorage::new()?;
         storage.save_server(server)
-    }
-
-    /// Remove MCP server from storage
-    pub(super) fn _remove_mcp_server(&self, name: &str) -> anyhow::Result<()> {
-        let storage = crate::mcp_storage::McpStorage::new()?;
-        storage.remove_server(name)?;
-        Ok(())
     }
 
     /// Inject agent created event message

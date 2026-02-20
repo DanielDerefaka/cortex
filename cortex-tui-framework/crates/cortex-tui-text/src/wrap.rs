@@ -382,33 +382,6 @@ fn is_word_break(grapheme: &str) -> bool {
     false
 }
 
-/// Check if a character is a potential word break point (for CJK text).
-///
-/// CJK characters can break anywhere, so we treat them as word boundaries.
-#[allow(dead_code)]
-fn is_cjk_char(c: char) -> bool {
-    matches!(c as u32,
-        // CJK Unified Ideographs
-        0x4E00..=0x9FFF |
-        // CJK Extension A
-        0x3400..=0x4DBF |
-        // CJK Extension B-F (surrogate pairs in UTF-16)
-        0x20000..=0x2A6DF |
-        0x2A700..=0x2B73F |
-        0x2B740..=0x2B81F |
-        0x2B820..=0x2CEAF |
-        0x2CEB0..=0x2EBEF |
-        // CJK Compatibility Ideographs
-        0xF900..=0xFAFF |
-        // Hiragana
-        0x3040..=0x309F |
-        // Katakana
-        0x30A0..=0x30FF |
-        // Hangul Syllables
-        0xAC00..=0xD7AF
-    )
-}
-
 /// Iterator that yields wrapped lines.
 pub struct WrapIterator<'a> {
     remaining: &'a str,

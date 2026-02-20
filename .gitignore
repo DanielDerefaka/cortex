@@ -34,3 +34,6 @@ Thumbs.db
 # Backup files
 *.bak
 *.backup
+.cargo-home/
+.sccache/
+.rustup/

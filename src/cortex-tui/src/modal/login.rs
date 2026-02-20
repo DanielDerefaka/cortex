@@ -221,10 +221,12 @@ impl LoginModal {
         buf.set_line(chunks[1].x, chunks[1].y, &url_label, chunks[1].width);
 
         // URL (truncate if needed)
-        let url_display = if self.verification_url.len() > chunks[2].width as usize - 2 {
+        let url_max = (chunks[2].width as usize).saturating_sub(2);
+        let url_display = if self.verification_url.len() > url_max {
+            let trunc_len = (chunks[2].width as usize).saturating_sub(5);
             format!(
                 "{}...",
-                &self.verification_url[..chunks[2].width as usize - 5]
+                &self.verification_url[..self.verification_url.floor_char_boundary(trunc_len)]
             )
         } else {
             self.verification_url.clone()
@@ -271,11 +273,10 @@ impl LoginModal {
         let box_x = area.x + (area.width.saturating_sub(box_width)) / 2;
 
         // Top border
-        let top = format!("┌{}┐", "─".repeat(box_width as usize - 2));
+        let top = format!("┌{}┐", "─".repeat((box_width as usize).saturating_sub(2)));
         buf.set_string(box_x, area.y, &top, Style::default().fg(BORDER));
 
         // Code line with padding
-        let _code_line = format!("│  {}  │", self.user_code);
         buf.set_string(box_x, area.y + 1, "│", Style::default().fg(BORDER));
         buf.set_string(
             box_x + 1,
@@ -291,7 +292,7 @@ impl LoginModal {
         );
 
         // Bottom border
-        let bottom = format!("└{}┘", "─".repeat(box_width as usize - 2));
+        let bottom = format!("└{}┘", "─".repeat((box_width as usize).saturating_sub(2)));
         buf.set_string(box_x, area.y + 2, &bottom, Style::default().fg(BORDER));
     }
 
@@ -326,8 +327,10 @@ impl LoginModal {
         buf.set_line(msg1_x, chunks[2].y, &msg1, chunks[2].width);
 
         // Truncate error if needed
-        let error_display = if error.len() > chunks[4].width as usize - 4 {
-            format!("{}...", &error[..chunks[4].width as usize - 7])
+        let err_max = (chunks[4].width as usize).saturating_sub(4);
+        let error_display = if error.len() > err_max {
+            let trunc = (chunks[4].width as usize).saturating_sub(7);
+            format!("{}...", &error[..error.floor_char_boundary(trunc)])
         } else {
             error.to_string()
         };

@@ -296,7 +296,8 @@ impl TemplateEngine {
     pub fn load_templates(&mut self) -> Result<usize> {
         let mut count = 0;
 
-        for dir in self.template_dirs.clone() {
+        let dirs: Vec<_> = self.template_dirs.clone();
+        for dir in dirs {
             if !dir.exists() {
                 continue;
             }

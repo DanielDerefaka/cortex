@@ -255,11 +255,6 @@ impl EventLoop {
         }
     }
 
-    /// Returns the chat area rectangle if available.
-    pub(super) fn _get_chat_area(&self) -> Option<Rect> {
-        self.click_zones.get_zone_rect(ClickZoneId::ChatArea)
-    }
-
     /// Copies the current text selection to the clipboard.
     pub(super) fn copy_selection_to_clipboard(
         &mut self,

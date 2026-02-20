@@ -248,7 +248,7 @@ impl ActionBar {
             return;
         }
 
-        let available_width = area.width as usize - 2; // padding
+        let available_width = (area.width as usize).saturating_sub(2); // padding
         let actions_width = self.calculate_actions_width();
         let hints_width = self.calculate_hints_width(false);
         let hints_abbreviated_width = self.calculate_hints_width(true);

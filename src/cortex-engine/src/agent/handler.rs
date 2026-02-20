@@ -1,9 +1,8 @@
 //! Message handler for processing model responses.
 
 use super::{AgentEvent, AgentProfile, RiskLevel, ToolPermission};
-use crate::client::types::{Message, MessageContent, ToolCall};
+use crate::client::types::{Message, ToolCall};
 use crate::error::{CortexError, Result};
-use cortex_common::strip_ansi_codes;
 use std::path::Path;
 use tokio::sync::mpsc;
 
@@ -122,74 +121,67 @@ pub trait MessageFilter: Send + Sync {
     fn filter(&self, message: &Message) -> bool;
 }
 
-/// Truncate message content to a maximum length.
-#[derive(Debug)]
-#[allow(dead_code)]
-pub struct TruncateTransformer {
-    max_length: usize,
-    suffix: String,
-}
-
-#[allow(dead_code)]
-impl TruncateTransformer {
-    pub fn new(max_length: usize) -> Self {
-        Self {
-            max_length,
-            suffix: "... [truncated]".to_string(),
-        }
-    }
-
-    pub fn with_suffix(mut self, suffix: impl Into<String>) -> Self {
-        self.suffix = suffix.into();
-        self
-    }
-}
-
-impl MessageTransformer for TruncateTransformer {
-    fn transform(&self, mut message: Message) -> Message {
-        if let MessageContent::Text(ref mut text) = message.content
-            && text.len() > self.max_length
-        {
-            text.truncate(self.max_length - self.suffix.len());
-            text.push_str(&self.suffix);
-        }
-        message
-    }
-}
-
-/// Strip ANSI escape codes from messages.
-#[derive(Debug, Default)]
-#[allow(dead_code)]
-pub struct StripAnsiTransformer;
-
-impl MessageTransformer for StripAnsiTransformer {
-    fn transform(&self, mut message: Message) -> Message {
-        if let MessageContent::Text(ref mut text) = message.content {
-            *text = strip_ansi_codes(text);
-        }
-        message
-    }
-}
-
-/// Filter out empty messages.
-#[derive(Debug, Default)]
-#[allow(dead_code)]
-pub struct NonEmptyFilter;
-
-impl MessageFilter for NonEmptyFilter {
-    fn filter(&self, message: &Message) -> bool {
-        match &message.content {
-            MessageContent::Text(text) => !text.trim().is_empty(),
-            MessageContent::Parts(parts) => !parts.is_empty(),
-            MessageContent::ToolResult { content, .. } => !content.trim().is_empty(),
-            MessageContent::ToolCalls(calls) => !calls.is_empty(),
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::client::types::MessageContent;
+    use cortex_common::strip_ansi_codes;
+
+    /// Truncate message content to a maximum length.
+    #[derive(Debug)]
+    pub struct TruncateTransformer {
+        max_length: usize,
+        suffix: String,
+    }
+
+    impl TruncateTransformer {
+        pub fn new(max_length: usize) -> Self {
+            Self {
+                max_length,
+                suffix: "... [truncated]".to_string(),
+            }
+        }
+    }
+
+    impl MessageTransformer for TruncateTransformer {
+        fn transform(&self, mut message: Message) -> Message {
+            if let MessageContent::Text(ref mut text) = message.content
+                && text.len() > self.max_length
+            {
+                text.truncate(self.max_length - self.suffix.len());
+                text.push_str(&self.suffix);
+            }
+            message
+        }
+    }
+
+    /// Strip ANSI escape codes from messages.
+    #[derive(Debug, Default)]
+    pub struct StripAnsiTransformer;
+
+    impl MessageTransformer for StripAnsiTransformer {
+        fn transform(&self, mut message: Message) -> Message {
+            if let MessageContent::Text(ref mut text) = message.content {
+                *text = strip_ansi_codes(text);
+            }
+            message
+        }
+    }
+
+    /// Filter out empty messages.
+    #[derive(Debug, Default)]
+    pub struct NonEmptyFilter;
+
+    impl MessageFilter for NonEmptyFilter {
+        fn filter(&self, message: &Message) -> bool {
+            match &message.content {
+                MessageContent::Text(text) => !text.trim().is_empty(),
+                MessageContent::Parts(parts) => !parts.is_empty(),
+                MessageContent::ToolResult { content, .. } => !content.trim().is_empty(),
+                MessageContent::ToolCalls(calls) => !calls.is_empty(),
+            }
+        }
+    }
 
     #[test]
     fn test_truncate_transformer() {

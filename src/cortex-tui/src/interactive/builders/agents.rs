@@ -321,7 +321,6 @@ pub fn build_agents_selector(
 
     // Add project agents
     if !project_agents.is_empty() {
-        let _current_category = Some(AgentCategory::Project);
         items.push(
             InteractiveItem::new(
                 format!("__cat_{}", AgentCategory::Project.label()),
@@ -352,7 +351,6 @@ pub fn build_agents_selector(
 
     // Add global agents
     if !global_agents.is_empty() {
-        let _current_category = Some(AgentCategory::Global);
         items.push(
             InteractiveItem::new(
                 format!("__cat_{}", AgentCategory::Global.label()),

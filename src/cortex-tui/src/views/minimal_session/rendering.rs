@@ -11,7 +11,7 @@ use ratatui::widgets::{
 };
 
 use cortex_core::markdown::MarkdownTheme;
-use cortex_core::widgets::{Brain, Message, MessageRole};
+use cortex_core::widgets::{Message, MessageRole};
 use cortex_tui_components::welcome_card::{InfoCard, InfoCardPair, ToLines, WelcomeCard};
 
 use crate::app::{AppState, SubagentDisplayStatus, SubagentTaskDisplay};
@@ -149,12 +149,6 @@ pub fn render_message_with_theme(
     lines.push(Line::from(""));
 
     lines
-}
-
-/// Renders a single message to lines (uses default theme).
-/// For backwards compatibility - prefer render_message_with_theme when theme is available.
-pub fn render_message(msg: &Message, width: u16, colors: &AdaptiveColors) -> Vec<Line<'static>> {
-    render_message_with_theme(msg, width, colors, &MarkdownTheme::default())
 }
 
 /// Renders a single tool call with status indicator
@@ -616,18 +610,6 @@ pub fn render_text_content_with_theme(
     renderer.render(content)
 }
 
-/// Renders finalized text content (without streaming cursor).
-/// Used for text segments that are already committed in content_segments.
-/// For backwards compatibility - prefer render_text_content_with_theme when theme is available.
-#[allow(dead_code)]
-pub fn render_text_content(
-    content: &str,
-    width: u16,
-    _colors: &AdaptiveColors,
-) -> Vec<Line<'static>> {
-    render_text_content_with_theme(content, width, &MarkdownTheme::default())
-}
-
 /// Renders streaming content with cursor and markdown theme.
 /// Used only for actively streaming content (pending_text_segment).
 pub fn render_streaming_content_with_theme(
@@ -650,18 +632,6 @@ pub fn render_streaming_content_with_theme(
 
     rendered_lines.push(Line::from(""));
     rendered_lines
-}
-
-/// Renders streaming content with cursor.
-/// Used only for actively streaming content (pending_text_segment).
-/// For backwards compatibility - prefer render_streaming_content_with_theme when theme is available.
-#[allow(dead_code)]
-pub fn render_streaming_content(
-    content: &str,
-    width: u16,
-    colors: &AdaptiveColors,
-) -> Vec<Line<'static>> {
-    render_streaming_content_with_theme(content, width, colors, &MarkdownTheme::default())
 }
 
 /// Renders a thin scrollbar on the right side with fade effect.
@@ -784,7 +754,6 @@ pub fn _render_motd(area: Rect, buf: &mut Buffer, colors: &AdaptiveColors, app_s
     );
 
     // Get info from app_state
-    let _user_email = app_state.user_email.as_deref().unwrap_or("user@cortex.ai");
     let org_name = app_state.org_name.as_deref().unwrap_or("Personal");
     let cwd = std::env::current_dir()
         .map(|p| p.display().to_string())
@@ -877,88 +846,6 @@ pub fn _render_welcome_text_centered(
 
     let paragraph = Paragraph::new(lines).alignment(ratatui::layout::Alignment::Center);
     paragraph.render(text_area, buf);
-}
-
-/// Renders a compact MOTD at the top of the chat area (when messages exist).
-/// Shows Brain animation on left and info on right, aligned to top.
-#[allow(dead_code)]
-pub fn render_motd_compact(
-    area: Rect,
-    buf: &mut Buffer,
-    colors: &AdaptiveColors,
-    app_state: &AppState,
-) {
-    let brain_width = Brain::width();
-    let brain_height = Brain::height();
-    let brain_text_gap = 4_u16;
-    let text_width = 35_u16;
-
-    let total_content_width = brain_width + brain_text_gap + text_width;
-
-    // Check if we have enough space
-    if area.width < total_content_width + 2 || area.height < 8 {
-        // Not enough space, just show a minimal header
-        let accent = colors.accent;
-        let dim = colors.text_dim;
-        let line = Line::from(vec![
-            Span::styled(
-                "Cortex",
-                Style::default().fg(accent).add_modifier(Modifier::BOLD),
-            ),
-            Span::styled(" | ", Style::default().fg(dim)),
-            Span::styled(&app_state.model, Style::default().fg(colors.text)),
-        ]);
-        Paragraph::new(line).render(area, buf);
-        return;
-    }
-
-    // Center horizontally
-    let x_offset = area.width.saturating_sub(total_content_width) / 2;
-
-    // Brain area (left side, at top)
-    let brain_area = Rect::new(
-        area.x + x_offset,
-        area.y,
-        brain_width,
-        brain_height.min(area.height),
-    );
-
-    // Render animated brain
-    let brain = Brain::new()
-        .with_frame(app_state.brain_frame)
-        .with_intensity(1.0);
-    brain.render(brain_area, buf);
-
-    // Text area (right of brain)
-    let text_x = area.x + x_offset + brain_width + brain_text_gap;
-    let text_area = Rect::new(text_x, area.y, text_width, area.height);
-
-    // Compact welcome text
-    let accent = colors.accent;
-    let text_color = colors.text;
-    let dim = colors.text_dim;
-
-    let short_model = app_state
-        .model
-        .rsplit('/')
-        .next()
-        .unwrap_or(&app_state.model);
-
-    let lines: Vec<Line<'static>> = vec![
-        Line::from(Span::styled(
-            "Cortex",
-            Style::default().fg(accent).add_modifier(Modifier::BOLD),
-        )),
-        Line::from(Span::styled("─────────────────", Style::default().fg(dim))),
-        Line::from(vec![
-            Span::styled("Model: ", Style::default().fg(dim)),
-            Span::styled(short_model.to_string(), Style::default().fg(text_color)),
-        ]),
-        Line::from(""),
-        Line::from(Span::styled("/ commands  ? help", Style::default().fg(dim))),
-    ];
-
-    Paragraph::new(lines).render(text_area, buf);
 }
 
 /// Renders an update notification banner above the input box.

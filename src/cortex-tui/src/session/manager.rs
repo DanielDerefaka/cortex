@@ -500,7 +500,7 @@ impl CortexSession {
     pub fn format_tokens(&self) -> String {
         let total = self.total_tokens();
         if total < 1000 {
-            format!("{}", total)
+            total.to_string()
         } else if total < 1_000_000 {
             format!("{:.1}K", total as f64 / 1000.0)
         } else {

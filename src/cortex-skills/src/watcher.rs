@@ -221,6 +221,7 @@ impl Drop for SkillWatcher {
 mod tests {
     use super::*;
 
+    use serial_test::serial;
     use tempfile::TempDir;
 
     #[tokio::test]
@@ -247,6 +248,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_watcher_start_stop() {
         let temp = TempDir::new().unwrap();
         let (tx, _rx) = mpsc::channel(10);
@@ -262,6 +264,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_watcher_add_remove_dir() {
         let temp1 = TempDir::new().unwrap();
         let temp2 = TempDir::new().unwrap();
@@ -279,6 +282,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_watcher_nonexistent_dir() {
         let (tx, _rx) = mpsc::channel(10);
         let mut watcher = SkillWatcher::new(tx);
