@@ -8,8 +8,6 @@ use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, Widget};
 
-use cortex_core::widgets::Message;
-
 use crate::app::AppState;
 use crate::ui::colors::AdaptiveColors;
 use crate::ui::consts::{CURSOR_BLINK_INTERVAL_MS, border};
@@ -17,8 +15,8 @@ use crate::widgets::{HintContext, KeyHints, StatusIndicator};
 
 use super::layout::LayoutManager;
 use super::rendering::{
-    _render_motd, generate_message_lines, generate_welcome_lines, render_message,
-    render_scroll_to_bottom_hint, render_scrollbar, render_subagent, render_tool_call,
+    generate_message_lines, generate_welcome_lines,
+    render_scroll_to_bottom_hint, render_scrollbar,
 };
 
 // Re-export for convenience
@@ -53,85 +51,6 @@ impl<'a> MinimalSessionView<'a> {
         Self {
             app_state,
             colors: app_state.adaptive_colors(),
-        }
-    }
-
-    /// Renders a single message to lines.
-    fn render_message(&self, msg: &Message, width: u16) -> Vec<Line<'static>> {
-        render_message(msg, width, &self.colors)
-    }
-
-    /// Renders a single tool call with status indicator
-    fn _render_tool_call(
-        &self,
-        call: &crate::views::tool_call::ToolCallDisplay,
-        width: u16,
-    ) -> Vec<Line<'static>> {
-        render_tool_call(call, width, &self.colors)
-    }
-
-    /// Renders a subagent task with todos in Factory-style format
-    fn _render_subagent(
-        &self,
-        task: &crate::app::SubagentTaskDisplay,
-        width: u16,
-    ) -> Vec<Line<'static>> {
-        render_subagent(task, width, &self.colors)
-    }
-
-    /// Renders the chat area with welcome cards as part of scrollable content.
-    fn _render_chat_with_welcome(&self, area: Rect, buf: &mut Buffer) {
-        if area.is_empty() {
-            return;
-        }
-
-        // Welcome card heights: 1 (top margin) + 11 (welcome card) + 1 (gap) + 5 (info cards) = 18
-        let welcome_height = 18_u16;
-
-        // Calculate total content height: welcome cards + messages
-        let has_messages =
-            !self.app_state.messages.is_empty() || self.app_state.streaming.is_streaming;
-
-        if !has_messages {
-            // Only welcome cards, render them at top with 1 line margin
-            let welcome_area = Rect::new(
-                area.x,
-                area.y + 1,
-                area.width,
-                welcome_height.min(area.height.saturating_sub(1)),
-            );
-            _render_motd(welcome_area, buf, &self.colors, self.app_state);
-            return;
-        }
-
-        // We have messages - render welcome cards first, then messages below
-        let scroll_offset = self.app_state.chat_scroll;
-
-        // If scrolled past welcome cards, only show messages
-        if scroll_offset > 0 {
-            // Render only messages (welcome cards scrolled out of view)
-            self._render_messages_only(area, buf);
-        } else {
-            // Show welcome cards at top, messages below
-            let welcome_area = Rect::new(
-                area.x,
-                area.y + 1,
-                area.width,
-                welcome_height.min(area.height.saturating_sub(1)),
-            );
-            _render_motd(welcome_area, buf, &self.colors, self.app_state);
-
-            // Render messages below welcome cards
-            let messages_y = area.y + 1 + welcome_height + 1; // 1 margin + welcome + 1 gap
-            if messages_y < area.y + area.height {
-                let messages_area = Rect::new(
-                    area.x,
-                    messages_y,
-                    area.width,
-                    area.height.saturating_sub(welcome_height + 2),
-                );
-                self._render_messages_only(messages_area, buf);
-            }
         }
     }
 
@@ -203,63 +122,6 @@ impl<'a> MinimalSessionView<'a> {
 
         // Return actual content height (capped at area height)
         (total_lines as u16).min(area.height)
-    }
-
-    /// Generates welcome card as styled lines using TUI components.
-    fn _generate_welcome_lines(&self, width: u16) -> Vec<Line<'static>> {
-        generate_welcome_lines(width, &self.colors, self.app_state)
-    }
-
-    /// Generates message lines for scrollable content.
-    fn _generate_message_lines(&self, width: u16) -> Vec<Line<'static>> {
-        generate_message_lines(width, &self.colors, self.app_state)
-    }
-
-    /// Renders only the chat messages (no welcome cards) - legacy function for compatibility.
-    fn _render_messages_only(&self, area: Rect, buf: &mut Buffer) {
-        if area.is_empty() || area.height == 0 {
-            return;
-        }
-
-        let all_lines = self._generate_message_lines(area.width);
-        let total_lines = all_lines.len();
-        let visible_lines = area.height as usize;
-
-        if total_lines == 0 {
-            return;
-        }
-
-        let max_scroll = total_lines.saturating_sub(visible_lines);
-        let scroll_offset = self.app_state.chat_scroll.min(max_scroll);
-
-        let start = if total_lines > visible_lines {
-            total_lines - visible_lines - scroll_offset
-        } else {
-            0
-        };
-        let end = (start + visible_lines).min(total_lines);
-
-        // Render the visible portion
-        let visible: Vec<Line<'static>> = all_lines[start..end].to_vec();
-        let paragraph = Paragraph::new(visible);
-        paragraph.render(area, buf);
-
-        // Render scrollbar if visible (with fade effect)
-        let opacity = self.app_state.scrollbar_opacity();
-        render_scrollbar(
-            area,
-            buf,
-            total_lines,
-            scroll_offset,
-            max_scroll,
-            visible_lines,
-            opacity,
-        );
-
-        // Render "go to bottom" indicator if not at bottom
-        if !self.app_state.is_chat_at_bottom() && total_lines > visible_lines {
-            render_scroll_to_bottom_hint(area, buf, &self.colors);
-        }
     }
 
     /// Renders the input area.
@@ -411,31 +273,6 @@ impl<'a> MinimalSessionView<'a> {
         } else {
             "Idle".to_string()
         }
-    }
-
-    /// Calculates the height needed to render all messages.
-    #[allow(dead_code)]
-    fn calculate_messages_height(&self, width: u16) -> u16 {
-        let mut total_lines = 0_usize;
-
-        for msg in &self.app_state.messages {
-            let lines = self.render_message(msg, width);
-            total_lines += lines.len();
-        }
-
-        // Add content segments
-        for segment in &self.app_state.content_segments {
-            if let crate::views::tool_call::ContentSegment::Text { content, .. } = segment {
-                total_lines += (content.len() / 80) + 2;
-            }
-        }
-
-        // Add pending streaming text
-        if !self.app_state.pending_text_segment.is_empty() {
-            total_lines += (self.app_state.pending_text_segment.len() / 80) + 2;
-        }
-
-        total_lines as u16
     }
 
     /// Renders autocomplete suggestions inline below the input.

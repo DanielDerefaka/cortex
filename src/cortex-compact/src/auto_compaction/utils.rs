@@ -15,7 +15,7 @@ pub fn timestamp_now() -> u64 {
 /// Get current timestamp as formatted string for filenames.
 pub fn chrono_timestamp() -> String {
     let now = timestamp_now();
-    format!("{}", now)
+    now.to_string()
 }
 
 /// Estimate available disk space in bytes (platform-specific).

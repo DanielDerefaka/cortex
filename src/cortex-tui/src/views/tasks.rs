@@ -155,7 +155,7 @@ impl TasksView {
                     Cell::from(status_badge(&agent.status)),
                     Cell::from(truncate_first_line(&agent.task, 40).into_owned()).style(style),
                     Cell::from(format_duration(agent.duration())).style(style),
-                    Cell::from(format!("{}", agent.tokens_used)).style(style),
+                    Cell::from(agent.tokens_used.to_string()).style(style),
                 ])
                 .style(style)
             })

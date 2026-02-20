@@ -495,7 +495,7 @@ impl ForgeView {
                 Row::new(vec![
                     Cell::from(agent.name.clone()).style(style),
                     Cell::from(status_badge(agent.status)),
-                    Cell::from(format!("{}", agent.findings_count)).style(style),
+                    Cell::from(agent.findings_count.to_string()).style(style),
                     Cell::from(duration_str).style(style),
                 ])
                 .style(style)

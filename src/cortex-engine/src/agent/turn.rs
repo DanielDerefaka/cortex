@@ -214,66 +214,44 @@ impl TurnResult {
     }
 }
 
-/// Turn builder.
-#[derive(Debug, Default)]
-#[allow(dead_code)]
-pub struct TurnBuilder {
-    id: u64,
-    user_items: Vec<UserInputItem>,
-    metadata: std::collections::HashMap<String, serde_json::Value>,
-}
-
-#[allow(dead_code)]
-impl TurnBuilder {
-    /// Create new builder.
-    pub fn new(id: u64) -> Self {
-        Self {
-            id,
-            ..Self::default()
-        }
-    }
-
-    /// Add text input.
-    pub fn text(mut self, content: impl Into<String>) -> Self {
-        self.user_items.push(UserInputItem::Text {
-            content: content.into(),
-        });
-        self
-    }
-
-    /// Add file input.
-    pub fn file(mut self, path: impl Into<String>) -> Self {
-        self.user_items.push(UserInputItem::File {
-            path: path.into(),
-            content: None,
-        });
-        self
-    }
-
-    /// Add image input.
-    pub fn image(mut self, url: impl Into<String>) -> Self {
-        self.user_items
-            .push(UserInputItem::Image { url: url.into() });
-        self
-    }
-
-    /// Add metadata.
-    pub fn metadata(mut self, key: impl Into<String>, value: serde_json::Value) -> Self {
-        self.metadata.insert(key.into(), value);
-        self
-    }
-
-    /// Build the turn.
-    pub fn build(self) -> Turn {
-        let mut turn = Turn::new(self.id, self.user_items);
-        turn.metadata = self.metadata;
-        turn
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Turn builder (test-only).
+    #[derive(Debug, Default)]
+    pub struct TurnBuilder {
+        id: u64,
+        user_items: Vec<UserInputItem>,
+    }
+
+    impl TurnBuilder {
+        pub fn new(id: u64) -> Self {
+            Self {
+                id,
+                ..Self::default()
+            }
+        }
+
+        pub fn text(mut self, content: impl Into<String>) -> Self {
+            self.user_items.push(UserInputItem::Text {
+                content: content.into(),
+            });
+            self
+        }
+
+        pub fn file(mut self, path: impl Into<String>) -> Self {
+            self.user_items.push(UserInputItem::File {
+                path: path.into(),
+                content: None,
+            });
+            self
+        }
+
+        pub fn build(self) -> Turn {
+            Turn::new(self.id, self.user_items)
+        }
+    }
 
     #[test]
     fn test_turn_creation() {

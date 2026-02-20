@@ -476,9 +476,10 @@ impl UpgradeModal {
         buf.set_line(x1, chunks[1].y, &msg1, chunks[1].width);
 
         // Truncate error if needed
-        let max_len = chunks[2].width as usize - 4;
+        let max_len = (chunks[2].width as usize).saturating_sub(4);
         let error_display = if error.len() > max_len {
-            format!("{}...", &error[..max_len - 3])
+            let trunc = max_len.saturating_sub(3);
+            format!("{}...", &error[..trunc])
         } else {
             error.to_string()
         };

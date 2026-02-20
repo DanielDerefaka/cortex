@@ -184,14 +184,16 @@ impl ConfigLoader {
 
     /// Load from all sources.
     pub fn load(&mut self) -> Result<()> {
-        // Load from files
-        for path in &self.search_paths.clone() {
-            for name in &self.config_names.clone() {
-                let file_path = path.join(name);
-                if file_path.exists() {
-                    self.load_file(&file_path)?;
-                }
-            }
+        // Collect file paths first to avoid borrowing conflicts with self.load_file()
+        let file_paths: Vec<_> = self
+            .search_paths
+            .iter()
+            .flat_map(|path| self.config_names.iter().map(move |name| path.join(name)))
+            .filter(|p| p.exists())
+            .collect();
+
+        for file_path in file_paths {
+            self.load_file(&file_path)?;
         }
 
         // Load from environment

@@ -6,8 +6,6 @@ use anyhow::Result;
 
 use crate::actions::{ActionContext, KeyAction};
 use crate::app::{AppView, AutocompleteItem, AutocompleteTrigger};
-use crate::bridge::adapt_event;
-use crate::events::AppEvent;
 use crate::modal::ModalResult;
 use crate::runner::terminal::CortexTerminal;
 
@@ -599,124 +597,6 @@ impl EventLoop {
             terminal.clear()?;
             self.render(terminal)?;
         }
-        Ok(())
-    }
-
-    // ========================================================================
-    // BACKEND EVENT HANDLING
-    // ========================================================================
-
-    /// Handles an event from the cortex-core backend.
-    ///
-    /// Converts the protocol event to an application event and dispatches it.
-    pub(super) fn _handle_backend_event(&mut self, event: cortex_protocol::Event) -> Result<()> {
-        // Convert to AppEvent
-        if let Some(app_event) = adapt_event(event) {
-            self._handle_app_event(app_event)?;
-        }
-        Ok(())
-    }
-
-    /// Handles an application-level event.
-    ///
-    /// This method processes streaming events, tool events, message events,
-    /// and other high-level application events converted from backend events.
-    fn _handle_app_event(&mut self, event: AppEvent) -> Result<()> {
-        match event {
-            AppEvent::StreamingStarted => {
-                self.stream_controller.start_processing();
-                // Don't reset timer here - this is triggered by backend TaskStarted event
-                // which could be either a new prompt or a continuation
-                self.app_state.start_streaming(None, false);
-            }
-
-            AppEvent::StreamingChunk(chunk) => {
-                self.stream_controller.append_text(&chunk);
-            }
-
-            AppEvent::StreamingCompleted => {
-                self.stream_controller.complete();
-                self.app_state.stop_streaming();
-
-                // Create message from accumulated content
-                let content = self.stream_controller.committed_text().to_string();
-                if !content.is_empty() {
-                    let message = cortex_core::widgets::Message::assistant(content);
-                    self.app_state.add_message(message);
-                }
-                self.stream_controller.reset();
-            }
-
-            AppEvent::StreamingError(err) => {
-                self.stream_controller.set_error(err.clone());
-                self.app_state.stop_streaming();
-                tracing::error!("Streaming error: {}", err);
-            }
-
-            AppEvent::MessageReceived(msg) => {
-                self.app_state.add_message(msg);
-            }
-
-            AppEvent::ToolStarted { name, args: _ } => {
-                self.stream_controller.start_tool(name.clone());
-                self.app_state.streaming.current_tool = Some(name);
-            }
-
-            AppEvent::ToolCompleted { name: _, result: _ } => {
-                self.app_state.streaming.current_tool = None;
-            }
-
-            AppEvent::ToolApprovalRequired { name, args, diff } => {
-                self.stream_controller.wait_approval(name.clone());
-                let args_str = serde_json::to_string_pretty(&args).unwrap_or_default();
-                self.app_state.request_approval(name, args_str, diff);
-            }
-
-            AppEvent::ToolError { name, error } => {
-                tracing::error!("Tool '{}' error: {}", name, error);
-                self.app_state.streaming.current_tool = None;
-            }
-
-            AppEvent::ToolProgress { name: _, status: _ } => {
-                // Tool progress updates are handled by stream controller
-            }
-
-            AppEvent::ToolApproved(_) | AppEvent::ToolRejected(_) => {
-                // These are outgoing events, not incoming
-            }
-
-            AppEvent::Error(err) => {
-                tracing::error!("Backend error: {}", err);
-                // Could show error notification in UI
-            }
-
-            AppEvent::Warning(warning) => {
-                tracing::warn!("Backend warning: {}", warning);
-            }
-
-            AppEvent::Info(info) => {
-                tracing::info!("Backend info: {}", info);
-            }
-
-            AppEvent::SessionCreated(id) => {
-                self.app_state.session_id = Some(id);
-            }
-
-            AppEvent::SessionLoaded(id) => {
-                self.app_state.session_id = Some(id);
-                self.app_state.set_view(AppView::Session);
-            }
-
-            AppEvent::Quit => {
-                self.app_state.set_quit();
-            }
-
-            // Handle other events as needed
-            _ => {
-                tracing::debug!("Unhandled app event: {:?}", event);
-            }
-        }
-
         Ok(())
     }
 

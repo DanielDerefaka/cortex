@@ -9,15 +9,4 @@ impl CommandExecutor {
         CommandResult::OpenModal(ModalType::McpManager)
     }
 
-    #[allow(dead_code)]
-    pub(super) fn cmd_mcp_auth(&self, _cmd: &ParsedCommand) -> CommandResult {
-        // Deprecated: redirect to interactive MCP panel
-        CommandResult::OpenModal(ModalType::McpManager)
-    }
-
-    #[allow(dead_code)]
-    pub(super) fn cmd_mcp_logs(&self, _cmd: &ParsedCommand) -> CommandResult {
-        // Deprecated: redirect to interactive MCP panel
-        CommandResult::OpenModal(ModalType::McpManager)
-    }
 }

@@ -164,7 +164,7 @@ impl ProgressEvent {
                 if content.len() > 100 {
                     format!("{}...", &content[..100])
                 } else {
-                    format!("{}", content)
+                    content.to_string()
                 }
             }
             Self::ToolCallStarted { tool_name, .. } => {

@@ -48,54 +48,6 @@ pub struct AgentProfile {
     pub system_prompt: Option<String>,
 }
 
-/// State that can accumulate during a session and needs to be reset on profile switch.
-#[derive(Debug, Clone, Default)]
-#[allow(dead_code)]
-pub struct ProfileSessionState {
-    /// Cached tool registrations from previous profile.
-    pub tool_cache_dirty: bool,
-    /// Indicates MCP connections need to be refreshed.
-    pub mcp_connections_dirty: bool,
-    /// Previous profile name (for detecting switches).
-    pub previous_profile: Option<String>,
-}
-
-#[allow(dead_code)]
-impl ProfileSessionState {
-    /// Create new session state.
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Check if a profile switch occurred and mark state dirty.
-    pub fn on_profile_switch(&mut self, new_profile: &str) -> bool {
-        let switched = self
-            .previous_profile
-            .as_ref()
-            .map(|p| p != new_profile)
-            .unwrap_or(true);
-
-        if switched {
-            self.tool_cache_dirty = true;
-            self.mcp_connections_dirty = true;
-            self.previous_profile = Some(new_profile.to_string());
-        }
-
-        switched
-    }
-
-    /// Clear all dirty flags after reset is complete.
-    pub fn mark_clean(&mut self) {
-        self.tool_cache_dirty = false;
-        self.mcp_connections_dirty = false;
-    }
-
-    /// Check if any state needs to be refreshed.
-    pub fn needs_refresh(&self) -> bool {
-        self.tool_cache_dirty || self.mcp_connections_dirty
-    }
-}
-
 impl AgentProfile {
     /// Load all profiles from the project and user configuration.
     pub fn load_all() -> Result<HashMap<String, AgentProfile>> {

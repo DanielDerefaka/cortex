@@ -189,15 +189,6 @@ pub fn get_local_registry_entries() -> Vec<RegistryEntry> {
         .collect()
 }
 
-/// Convert a RegistryServer from remote to command/args for installation
-pub fn _get_remote_server_config(server: &RegistryServer) -> Option<(String, Vec<String>)> {
-    server
-        .install
-        .stdio
-        .as_ref()
-        .map(|stdio| (stdio.command.clone(), stdio.args.clone()))
-}
-
 // Re-export types for convenience (allow unused imports since they're for API exposure)
 #[allow(unused_imports)]
 pub use cortex_engine::mcp::{
